@@ -2,15 +2,14 @@ import pandas as pd
 import numpy as np
 import string
 import re
-import spacy
 import nltk
 nltk.download('stopwords')
 from nltk.corpus import stopwords
 from sklearn.decomposition import PCA
 import pickle as pkl
-from gensim.models import KeyedVectors
 import fasttext
 import fasttext.util
+
 
 # ------------------------------------------------------- Preprocessing -------------------------------------------------------
 
@@ -50,16 +49,15 @@ stopwords = nltk.corpus.stopwords.words('german')
 df['query_prep'] = df['query'].apply(preprocessing)
 print('Data preprocessed')
 
-# Apply Embedding function by using Wor2vec pre-taining model 
-# Using the German language model, trained with word2vec on the German Wikipedia (15th May 2015) and German news articles (15th May 2015)
-# Link of the model: https://devmount.github.io/GermanWordEmbeddings/
+# Apply Embedding using FastText pre-tained model 
+# FastText Works with 157 languages and is trained on Common Crawl and Wikipedia.
+# Link to download the pre-trained model on the german language: https://github.com/facebookresearch/fastText/blob/master/docs/crawl-vectors.md
 model_path = "./cc.de.300.bin"  
 model_embedding = fasttext.load_model(model_path)
-# fasttext.util.reduce_model(model_embedding, 100)
-model_words = model_embedding.get_words()                         # Load the pre-trained model
+model_words = model_embedding.get_words()                                                                         # Load the pre-trained model
 vector_dim = 300
 df['embedded_vectors'] = df['query_prep'].apply(lambda x: get_sentence_embedding(x, model_embedding, vector_dim)) # Apply the function to the "query" column of the DataFrame
-print('Finishing embedding')
+print('Embedding process is complete')
 
 # Apply PCA to reduce the size of vectors from 300 to 100
 pca = PCA(n_components=100)
@@ -67,7 +65,7 @@ transformed_column = pca.fit_transform(df['embedded_vectors'].values.tolist()) #
 df_pca = pd.DataFrame(data = transformed_column)                               # Convert the obtained vectors into a dataframe
 combined = [list(row) for row in df_pca.to_numpy()]
 df['embedded_vector_pca'] = combined                                           # Add new column containing the new vectors
-print('PCA applied')
+print('PCA is applied')
 pkl.dump(pca, open("pca.pkl","wb"))                                            # Load the PCA into pkl file
 
 df2 = df[['query', 'embedded_vector_pca']]
