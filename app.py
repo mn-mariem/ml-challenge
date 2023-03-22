@@ -2,12 +2,9 @@ import pandas as pd
 import numpy as np
 import string
 import re
-import spacy
 import nltk
 nltk.download('stopwords')
 from nltk.corpus import stopwords
-import gensim
-import gensim.downloader as api
 import pickle as pkl
 from annoy import AnnoyIndex
 import fasttext
@@ -17,6 +14,7 @@ from flask import Flask, request, render_template
 
 # Import data
 df = pd.read_csv('df_queries.csv')
+
 # Load the embedding model
 model_path = "./cc.de.300.bin"
 model_embedding = fasttext.load_model(model_path)
@@ -67,15 +65,11 @@ def home():
     if request.method=="POST" :
         input_query = request.form["input_query"]
         input_query_preprocessed = preprocessing(input_query)
-        vector = get_sentence_embedding(input_query_preprocessed, model_embedding, vector_dim=100)
-        final_vector = pca.transform(vector.reshape(1, -1))
-        final = index.get_nns_by_vector(final_vector.reshape(-1, 1), num_neighbors)
-        results_queries = [df['query'].iloc[i] for i in final]
-        print(results_queries)
-        input_vector = 1
-        # input_vector = pca.transform(input_vector_emb)
-        # index_result_vector = index.get_nns_by_vector(input_vector, num_neighbors)
-        # result_vector = df['query'].iloc[index_result_vector]
+        input_vector = get_sentence_embedding(input_query_preprocessed, model_embedding, vector_dim=100)
+        input_vector_pca = pca.transform(input_vector.reshape(1, -1))
+        index_result_queries = index.get_nns_by_vector(input_vector_pca.reshape(-1, 1), num_neighbors)
+        results_queries = [df['query'].iloc[i] for i in index_result_queries]
+        
         return render_template("home.html", usr="input_query", result=True, results_queries=results_queries)
     
     return render_template("home.html")
