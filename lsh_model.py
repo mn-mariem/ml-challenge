@@ -16,5 +16,8 @@ for i, row in df2[['embedded_vector_pca']].iterrows():
     vector = [float(x) for x in row.values[0][1:-1].split(',')]
     index.add_item(i, vector)
 
-index.build(num_trees) 
-index.save('annoy_model.ann') # Save the model
+# Build the model
+index.build(num_trees)    
+
+# Save the model
+index.save('annoy_model.ann') 
